@@ -32,7 +32,7 @@ print("Loading PDF and creating vector database...")
 Settings.embed_model = SentenceTransformerEmbedding("BAAI/bge-small-en-v1.5")
 documents = SimpleDirectoryReader(input_files=["game_manual.pdf"]).load_data()
 index = VectorStoreIndex.from_documents(documents)
-print("✓ Vector database created!\n")
+print("Vector database created!\n")
 
 def ask_question(query):
     print(f"Searching for: {query}")
