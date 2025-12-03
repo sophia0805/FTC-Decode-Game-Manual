@@ -112,7 +112,6 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      // Get the backend API URL from environment variable or use default
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const response = await fetch(`${apiUrl}/chat`, {
         method: 'POST',
