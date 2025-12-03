@@ -45,6 +45,56 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  const lightTheme = {
+    appBg: '#ffffff',
+    panelBg: '#ffffff',
+    border: 'rgba(52, 71, 104, 0.2)',
+    text: '#344768',
+    mutedText: '#6b7a99',
+    iconBg: 'rgb(211, 174, 26, 0.1)',
+    iconHoverBg: 'rgba(52, 71, 104, 0.2)',
+    userBubble: '#9053a0',
+    userText: '#ffffff',
+    assistantBubble: '#344768',
+    assistantText: '#ffffff',
+    buttonBg: '#344768',
+    buttonHover:'rgb(211, 174, 26)',
+    buttonActive: '#1f2a3d',
+    buttonText: '#ffffff',
+    loadingBubble: '#344768',
+    inputBg: '#ffffff',
+    inputText: '#344768',
+    inputBorder: 'rgba(52, 71, 104, 0.3)',
+    footerText: '#344768',
+    iconColor: '#344768',
+  };
+
+  const darkTheme = {
+    appBg: '#1a2332',
+    panelBg: '#1f2a3d',
+    border: 'rgba(255, 255, 255, 0.15)',
+    text: '#f1f5fb',
+    mutedText: '#cbd5f5',
+    iconBg: 'rgba(255, 255, 255, 0.1)',
+    iconHoverBg: 'rgba(255, 255, 255, 0.2)',
+    userBubble: '#f1f5fb',
+    userText: '#9053a0',
+    assistantBubble: '#f1f5fb',
+    assistantText: '#344768',
+    buttonBg: '#f1f5fb',
+    buttonHover: 'rgb(211, 174, 26)',
+    buttonActive: '#c0cffb',
+    buttonText: '#1a2332',
+    loadingBubble: '#2f3b57',
+    inputBg: '#1a2332',
+    inputText: '#f1f5fb',
+    inputBorder: 'rgba(255, 255, 255, 0.3)',
+    footerText: '#cbd5f5',
+    iconColor: '#f1f5fb',
+  };
+
+  const theme = isDarkMode ? darkTheme : lightTheme;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -57,32 +107,60 @@ export default function ChatPage() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = input.trim();
     setInput('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Get the backend API URL from environment variable or use default
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userInput }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'This is a placeholder response. Connect this to your RAG backend API.',
+        content: data.response,
         timestamp: new Date(),
       };
+      
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error calling backend API:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please make sure the backend is running and check your API URL configuration.`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="flex h-screen flex-col bg-white dark:bg-[#1a2332] transition-colors duration-200">
-      <header className="border-b bg-white px-6 py-4 dark:bg-[#1a2332]" style={{ borderColor: 'rgba(52, 71, 104, 0.2)' }}>
+    <div className="flex h-screen flex-col transition-colors duration-200" style={{ backgroundColor: theme.appBg }}>
+      <header className="border-b px-6 py-4" style={{ backgroundColor: theme.panelBg, borderColor: theme.border }}>
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/decodelogo.svg" alt="Decode Logo" className="h-15 w-auto" />
             <div>
-              <h1 className="text-xl font-medium dark:text-white" style={{ color: '#344768' }}>
+              <h1 className="text-xl font-medium" style={{ color: theme.text }}>
                 FTC Decode Chatbot
           </h1>
-              <p className="text-xs dark:text-gray-300" style={{ color: '#344768' }}>
+              <p className="text-xs" style={{ color: theme.mutedText }}>
                 Ask me anything about the FTC Game Manual for the 2025-2026 season!
           </p>
         </div>
@@ -90,16 +168,16 @@ export default function ChatPage() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors dark:text-gray-300"
+            className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
             style={{ 
-              backgroundColor: 'rgba(52, 71, 104, 0.1)',
-              color: '#344768'
+              backgroundColor: theme.iconBg,
+              color: theme.iconColor
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(52, 71, 104, 0.2)';
+              e.currentTarget.style.backgroundColor = theme.iconHoverBg;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(52, 71, 104, 0.1)';
+              e.currentTarget.style.backgroundColor = theme.iconBg;
             }}
             aria-label="Toggle theme"
           >
@@ -120,10 +198,10 @@ export default function ChatPage() {
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center animate-fade-in">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl" style={{ backgroundColor: 'rgba(52, 71, 104, 0.1)' }}>
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.iconBg }}>
                 <svg
                   className="h-10 w-10"
-                  style={{ color: '#344768' }}
+                  style={{ color: theme.iconColor }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -136,13 +214,13 @@ export default function ChatPage() {
                   />
                 </svg>
               </div>
-              <h2 className="mb-3 text-3xl font-medium dark:text-white" style={{ color: '#344768' }}>
+              <h2 className="mb-3 text-3xl font-medium" style={{ color: theme.text }}>
                 Welcome! 👋
               </h2>
-              <p className="mb-2 text-lg dark:text-gray-300" style={{ color: '#344768' }}>
+              <p className="mb-2 text-lg" style={{ color: theme.mutedText }}>
                 I'm here to help you find answers about the rules for the 2025-2026 FTC Decode season!
               </p>
-              <p className="text-sm dark:text-gray-400" style={{ color: '#344768' }}>
+              <p className="text-sm" style={{ color: theme.mutedText }}>
                 Start a conversation by typing a message below
               </p>
             </div>
@@ -160,7 +238,8 @@ export default function ChatPage() {
                 <div
                   className="max-w-[85%] rounded-2xl px-5 py-3.5 text-white shadow-md"
                   style={{
-                    backgroundColor: message.role === 'user' ? '#9053a0' : '#344768'
+                    backgroundColor: message.role === 'user' ? theme.userBubble : theme.assistantBubble,
+                    color: message.role === 'user' ? theme.userText : theme.assistantText,
                   }}
                 >
                   <p className="whitespace-pre-wrap break-words leading-relaxed text-[15px]">
@@ -179,7 +258,7 @@ export default function ChatPage() {
             ))}
             {isLoading && (
               <div className="flex justify-start animate-fade-in">
-                <div className="max-w-[85%] rounded-2xl px-5 py-4 shadow-md" style={{ backgroundColor: '#344768' }}>
+                <div className="max-w-[85%] rounded-2xl px-5 py-4 shadow-md" style={{ backgroundColor: theme.loadingBubble }}>
                   <div className="flex items-center space-x-2">
                     <div className="h-2 w-2 animate-bounce rounded-full bg-white [animation-delay:-0.3s]"></div>
                     <div className="h-2 w-2 animate-bounce rounded-full bg-white [animation-delay:-0.15s]"></div>
@@ -193,7 +272,7 @@ export default function ChatPage() {
         )}
       </div>
 
-      <div className="border-t bg-white px-6 py-5 dark:bg-[#1a2332]" style={{ borderColor: 'rgba(52, 71, 104, 0.2)' }}>
+      <div className="border-t px-6 py-5" style={{ backgroundColor: theme.panelBg, borderColor: theme.border }}>
         <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
           <div className="flex gap-3">
             <div className="relative flex-1">
@@ -202,15 +281,16 @@ export default function ChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your message..."
-                className="w-full rounded-2xl border bg-white px-5 py-3.5 pr-12 transition-colors focus:outline-none focus:ring-2 dark:bg-[#1a2332] dark:text-gray-50 dark:placeholder-gray-400"
+                className="w-full rounded-2xl border px-5 py-3.5 pr-12 transition-colors focus:outline-none focus:ring-2"
                 style={{ 
-                  borderColor: 'rgba(52, 71, 104, 0.3)',
-                  color: '#344768',
-                  '--tw-ring-color': 'rgba(52, 71, 104, 0.2)',
+                  borderColor: theme.inputBorder,
+                  backgroundColor: theme.inputBg,
+                  color: theme.inputText,
+                  '--tw-ring-color': theme.inputBorder,
                 } as React.CSSProperties & { '--tw-ring-color': string }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#344768';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(52, 71, 104, 0.2)';
+                  e.target.style.borderColor = theme.inputBorder;
+                  e.target.style.boxShadow = `0 0 0 2px ${theme.inputBorder}`;
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = '';
@@ -224,7 +304,7 @@ export default function ChatPage() {
                   }
                 }}
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 dark:text-gray-400" style={{ color: 'rgba(52, 71, 104, 0.6)' }}>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2" style={{ color: theme.mutedText }}>
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
@@ -233,26 +313,26 @@ export default function ChatPage() {
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="flex items-center gap-2 rounded-2xl px-6 py-3.5 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 shadow-md"
-              style={{ backgroundColor: '#344768' }}
+              className="flex items-center gap-2 rounded-2xl px-6 py-3.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 shadow-md"
+              style={{ backgroundColor: theme.buttonBg, color: theme.buttonText }}
               onMouseEnter={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#2a3850';
+                  e.currentTarget.style.backgroundColor = theme.buttonHover;
                 }
               }}
               onMouseLeave={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#344768';
+                  e.currentTarget.style.backgroundColor = theme.buttonBg;
                 }
               }}
               onMouseDown={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#1f2a3d';
+                  e.currentTarget.style.backgroundColor = theme.buttonActive;
                 }
               }}
               onMouseUp={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#344768';
+                  e.currentTarget.style.backgroundColor = theme.buttonBg;
                 }
               }}
             >
@@ -275,8 +355,8 @@ export default function ChatPage() {
         </form>
       </div>
 
-      <footer className="border-t bg-white px-4 py-2 dark:bg-[#1a2332]" style={{ borderColor: 'rgba(52, 71, 104, 0.2)' }}>
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-2 text-xs dark:text-gray-400" style={{ color: '#344768' }}>
+      <footer className="border-t px-4 py-2" style={{ backgroundColor: theme.panelBg, borderColor: theme.border }}>
+        <div className="mx-auto flex max-w-5xl items-center justify-center gap-2 text-xs" style={{ color: theme.footerText }}>
           <img src="/genetonlogo.svg" alt="Geneton Logo" className="h-6 w-6 rounded-full object-cover" />
           <span>Made by Team Geneton #26507</span>
         </div>
