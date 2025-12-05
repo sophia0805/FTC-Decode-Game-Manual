@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   id: string;
@@ -241,9 +243,57 @@ export default function ChatPage() {
                     color: message.role === 'user' ? theme.userText : theme.assistantText,
                   }}
                 >
-                  <p className="whitespace-pre-wrap break-words leading-relaxed text-[15px]">
-                    {message.content}
-                  </p>
+                  <div 
+                    className="break-words leading-relaxed text-[15px] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                    style={{ color: message.role === 'user' ? theme.userText : theme.assistantText }}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        h1: ({ children }) => <h1 className="mb-2 mt-3 text-xl font-bold first:mt-0">{children}</h1>,
+                        h2: ({ children }) => <h2 className="mb-2 mt-3 text-lg font-bold first:mt-0">{children}</h2>,
+                        h3: ({ children }) => <h3 className="mb-2 mt-2 text-base font-bold first:mt-0">{children}</h3>,
+                        ul: ({ children }) => <ul className="mb-2 ml-4 list-disc space-y-1">{children}</ul>,
+                        ol: ({ children }) => <ol className="mb-2 ml-4 list-decimal space-y-1">{children}</ol>,
+                        li: ({ children }) => <li className="ml-2">{children}</li>,
+                        code: ({ children, className }) => {
+                          const isInline = !className;
+                          return isInline ? (
+                            <code className="rounded bg-black/20 px-1.5 py-0.5 text-sm font-mono">{children}</code>
+                          ) : (
+                            <code className="block rounded bg-black/20 p-2 text-sm font-mono overflow-x-auto">{children}</code>
+                          );
+                        },
+                        pre: ({ children }) => <pre className="mb-2 overflow-x-auto rounded bg-black/20 p-2 text-sm">{children}</pre>,
+                        blockquote: ({ children }) => (
+                          <blockquote className="mb-2 border-l-4 border-current/30 pl-3 italic">{children}</blockquote>
+                        ),
+                        a: ({ children, href }) => (
+                          <a href={href} className="underline opacity-80 hover:opacity-100" target="_blank" rel="noopener noreferrer">
+                            {children}
+                          </a>
+                        ),
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        em: ({ children }) => <em className="italic">{children}</em>,
+                        hr: () => <hr className="my-3 border-current/20" />,
+                        table: ({ children }) => (
+                          <div className="mb-2 overflow-x-auto">
+                            <table className="min-w-full border-collapse border border-current/20">
+                              {children}
+                            </table>
+                          </div>
+                        ),
+                        thead: ({ children }) => <thead className="bg-current/10">{children}</thead>,
+                        tbody: ({ children }) => <tbody>{children}</tbody>,
+                        tr: ({ children }) => <tr className="border-b border-current/20">{children}</tr>,
+                        th: ({ children }) => <th className="border border-current/20 px-2 py-1 text-left font-semibold">{children}</th>,
+                        td: ({ children }) => <td className="border border-current/20 px-2 py-1">{children}</td>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                   <span
                     className="mt-2 block text-xs opacity-80"
                   >
