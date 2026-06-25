@@ -1,0 +1,15 @@
+{
+	admin unix//home/sophia/caddy-admin.sock
+}
+http://sophia.hackclub.app {
+	bind unix/.sophia.hackclub.app.webserver.sock|777
+	root * /home/sophia/pub/portfolio
+	file_server {
+		hide .git .env
+	}
+}
+
+http://ftcgeneton-decode.sophia.hackclub.app {
+        bind unix/ftcgeneton-decode.sophia.hackclub.app.webserver.sock|777
+	reverse_proxy :46289
+}

@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-dotenv
+requests
+llama-index
+sentence-transformers
+pydantic
