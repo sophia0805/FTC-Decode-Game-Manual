@@ -1,0 +1,16 @@
+[Unit]
+Description=FastAPI Backend Service
+After=network.target
+
+[Service]
+WorkingDirectory=/home/sophia/pub/ftcgeneton-decode
+ExecStart=
+ExecStart=/home/sophia/pub/ftcgeneton-decode/venv/bin/uvicorn 'app:app' --host '0.0.0.0' --port '46289' --workers '1'
+Restart=always
+RestartSec=5
+TimeoutStartSec=300
+TimeoutStopSec=30
+Environment=PATH=/home/sophia/pub/ftcgeneton-decode/venv/bin:/usr/bin:/usr/local/bin
+
+[Install]
+WantedBy=default.target
